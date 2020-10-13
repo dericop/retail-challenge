@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: #{service}#
+  namespace: #{namespace}#
+spec:
+  selector:
+    app: #{project-name}#
+    pod: #{service}#-pod
+  ports:
+    - name: #{service}#-port
+      targetPort: #{container-port}#
+      port: #{service-port}#
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: #{service}#-deployment
+  namespace: #{namespace}#
+  labels:
+    app: #{project-name}#
+spec:
+  replicas: #{replicas}#
+  selector:
+    matchLabels:
+      pod: #{service}#-pod
+  template:
+    metadata:
+      labels:
+        app: #{project-name}#
+        pod: #{service}#-pod
+    spec:
+      containers:
+        - name: #{service}#-container
+          image: #{image}#
+          ports:
+            - containerPort: #{container-port}#
+          readinessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTP
+              httpHeaders:
+                - name: Content-Type
+                  value: application/json
+              port: #{container-port}#
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTP
+              httpHeaders:
+                - name: Content-Type
+                  value: application/json
+              port: #{container-port}#
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: #{requests-cpu}#
+              memory: #{requests-memory}#
+            limits:
+              cpu: #{requests-cpu-max}#
+          volumeMounts:
+            - name: #{service}#-volume-config
+              mountPath: "/app/rel/feature_flags/etc"
+              readOnly: true
+      volumes:
+        - name: #{service}#-volume-config
+          configMap:
+            name: #{service}#-configmap

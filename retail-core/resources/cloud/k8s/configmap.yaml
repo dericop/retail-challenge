@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #{service}#-configmap
+  namespace: #{namespace}#
+data:
+  config.exs: |-
+    import Config
+
+    config :retail_challenge,
+           http_port: 3000,
+           enable_server: true,
+           secret_name: "#{secret-name}#",
+           region: "#{secret-region}#",
+           version: "#{version}#"
+
+    config :ex_aws,
+           region: "#{secret-region}#",
+           access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],
+           secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role]
+
+    config :logger,
+           level: #{log-level-ex}#
+
+    config :retail_challenge,
+           RetailChallenge.Adapters.Repositories.Repo,
+           database: "#{db-schema}#",
+           username: System.get_env("username"),
+           password: System.get_env("password"),
+           hostname: System.get_env("hostname"),
+           pool_size: #{db-pool-size}#
+
