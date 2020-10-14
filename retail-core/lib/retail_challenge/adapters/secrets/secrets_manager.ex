@@ -51,6 +51,7 @@ defmodule RetailChallenge.Adapters.Secrets.SecretManagerAdapter do
   end
 
   def get_secret_value(secret_name, region) do
+    # TODO: Enable this
     #    ExAws.SecretsManager.get_secret_value(secret_name)
     #    |> ExAws.request(region: region)
     #    |> case do
