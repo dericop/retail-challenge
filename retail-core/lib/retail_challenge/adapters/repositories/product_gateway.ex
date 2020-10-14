@@ -19,7 +19,7 @@ defmodule RetailChallenge.Adapters.Repositories.ProductGateway do
             constraint: "stock_must_be_at_least_zero"
           }
         }
-      } -> {:error, :stok_not_available}
+      } -> {:error, :stock_not_available}
       error -> error
     end
   end

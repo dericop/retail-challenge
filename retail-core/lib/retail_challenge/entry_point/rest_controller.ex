@@ -20,18 +20,32 @@ defmodule RetailChallenge.Entrypoint.Rest.RestController do
   post "/order" do
     DataTypeUtils.normalize(conn.body_params)
     |> validate_headers(conn.req_headers)
-    |> OrderUseCase.handle_order_request(conn.req_headers)
+    |> OrderUseCase.handle_order_request
     |> build_empty_response(conn)
   end
 
   def validate_headers(body, headers) do
-    DataTypeUtils.extract_header(headers, "authorization") 
-    |> AuthenticationUseCase.validate_session
+    with {:ok, _} <- validate_content_type(headers),
+    {:ok, user} <- validate_session(headers)
+    
+    do
+      {user, body}
+      else
+        error -> error
+    end
 
-    body
   end
 
-  def validate_content_type(v) do
+  def validate_session(headers) do 
+    DataTypeUtils.extract_header(headers, "authorization") 
+    |> AuthenticationUseCase.validate_session
+  end
+
+  def validate_content_type(headers) do
+    case DataTypeUtils.extract_header(headers, "content-type") do
+      {:ok, "application/json"} -> {:ok, true}
+      error -> {:error, :media_type_not_supported}
+    end
   
   end
 
