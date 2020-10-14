@@ -24,16 +24,16 @@ defmodule RetailChallenge.Utils.DataTypeUtils do
     end
   end
 
+  def extract_header(headers, name) do
+    {:error, "headers is not a list when finding #{inspect(name)}: #{inspect(headers)}"}
+  end
+
   def extract_header!(headers, name) when is_list(headers) do
     out = Enum.filter(headers, create_evaluator(name))
     case out do
       [{_, value} | _] -> {:ok, value}
       _ -> {:ok, nil}
     end
-  end
-
-  def extract_header(headers, name) do
-    {:error, "headers is not a list when finding #{inspect(name)}: #{inspect(headers)}"}
   end
 
   defp create_evaluator(name) do
@@ -50,7 +50,7 @@ defmodule RetailChallenge.Utils.DataTypeUtils do
     {number, ""} = Float.parse(value)
     number
   rescue
-    err -> Logger.warn "Error parsing #{value} to float"
+    err -> Logger.warn "Error parsing #{value} to float #{inspect(err)}"
            nil
   end
 

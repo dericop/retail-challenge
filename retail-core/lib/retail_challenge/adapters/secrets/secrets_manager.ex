@@ -58,6 +58,6 @@ defmodule RetailChallenge.Adapters.Secrets.SecretManagerAdapter do
     #         {code, rs} -> {code, rs}
     #         no_expected -> {:error, no_expected}
     #       end
-    "{\"DB_HOST\":\"localhost\", \"DB_PORT\": 5432, \"DB_USERNAME\": \"postgres\", \"DB_PASSWORD\": \"hackaton\",\"DB_NAME\": \"postgres\"}"
+
   end
 end

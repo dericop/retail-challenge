@@ -33,8 +33,8 @@ defmodule RetailChallenge.Adapters.Repositories.RepoCache do
   defp exec_fallback(key, fallback_function) do
     Logger.debug "cache miss for #{inspect(key)}"
     case fallback_function.() do
-      {:ok, value} = res -> put(key, res)
-                            res
+      {:ok, _value} = res -> put(key, res)
+                             res
       error -> error
     end
   end

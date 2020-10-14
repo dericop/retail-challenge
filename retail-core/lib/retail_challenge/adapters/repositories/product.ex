@@ -7,6 +7,6 @@ defmodule RetailChallenge.Adapters.Repositories.Product do
     field(:description)
     field(:stock, :integer)
     field(:price, :decimal)
-    has_many :comments, Sale
+    has_many :sales, Sale, foreign_key: :product_id
   end
 end

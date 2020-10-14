@@ -3,7 +3,6 @@ defmodule RetailChallenge.Adapters.Repositories.Repo do
   alias Ecto.Adapters.SQL
   alias DBConnection.ConnectionError
   alias RetailChallenge.Utils.DataTypeUtils
-  import Ecto.Queryable
   use Ecto.Repo,
       otp_app: :retail_challenge,
       adapter: Ecto.Adapters.Postgres

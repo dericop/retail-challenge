@@ -6,6 +6,6 @@ defmodule RetailChallenge.Adapters.Repositories.User do
   schema "users" do
     field(:token)
     field(:age, :integer)
-    has_many :comments, Sale
+    has_many :sales, Sale, foreign_key: :buyer_id
   end
 end

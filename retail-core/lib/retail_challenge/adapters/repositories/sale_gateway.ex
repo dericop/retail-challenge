@@ -1,6 +1,5 @@
 defmodule RetailChallenge.Adapters.Repositories.SaleGateway do
   alias RetailChallenge.Adapters.Repositories.{Sale, Repo}
-  alias Ecto.Adapters.SQL
 
   def get_by_id(id) do
     Repo.get(Sale, id)
