@@ -3,7 +3,7 @@ import Config
 config :retail_challenge,
        http_port: 3000,
        enable_server: true,
-       secret_name: "",
+       secret_name: "my-secret",
        region: "us-east-1",
        version: "1.2.3"
 
@@ -22,3 +22,5 @@ config :retail_challenge,
        password: "loaded_from_secret",
        hostname: "loaded_from_secret",
        pool_size: 10
+
+config :retail_challenge, ecto_repos: [RetailChallenge.Adapters.Repositories.Repo]

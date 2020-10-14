@@ -2,7 +2,6 @@ defmodule RetailChallenge.Application do
   alias RetailChallenge.Config.AppConfig
   alias RetailChallenge.Entrypoint.Rest.RestController
   alias RetailChallenge.Adapters.Secrets.SecretManagerAdapter
-  alias RetailChallenge.Core.Crypt.Process.RequestCipherHolder
   alias RetailChallenge.Adapters.Repositories.{Repo, RepoCache}
   alias RetailChallenge.Config.{AppConfig, ConfigHolder}
   use Application
@@ -10,7 +9,7 @@ defmodule RetailChallenge.Application do
 
   def start(_type, _args) do
     config = AppConfig.load_config()
-    in_test? = Application.fetch_env(:feature_flags, :in_test)
+    in_test? = Application.fetch_env(:retail_challenge, :in_test)
 
     children = with_plug_server(config) ++ application_children(in_test?)
 
@@ -44,7 +43,6 @@ defmodule RetailChallenge.Application do
     [
       {ConfigHolder, AppConfig.load_config()},
       {SecretManagerAdapter, []},
-      {RequestCipherHolder, []},
       {Repo, []},
       {RepoCache, []},
     ]
