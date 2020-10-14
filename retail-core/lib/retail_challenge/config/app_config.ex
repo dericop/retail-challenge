@@ -4,7 +4,8 @@ defmodule RetailChallenge.Config.AppConfig do
     :enable_server,
     :secret_name,
     :region,
-    :version
+    :version,
+    :migrate
   ]
 
   def load_config do
@@ -13,7 +14,8 @@ defmodule RetailChallenge.Config.AppConfig do
       enable_server: load(:enable_server),
       secret_name: load(:secret_name),
       region: load(:region),
-      version: load(:version)
+      version: load(:version),
+      migrate: load(:migrate)
     }
   end
 

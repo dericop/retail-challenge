@@ -5,7 +5,8 @@ config :retail_challenge,
        enable_server: true,
        secret_name: System.get_env("secret_name"),
        region: System.get_env("region"),
-       version: System.get_env("version")
+       version: System.get_env("version"),
+       migrate: System.get_env("migrate")
 
 config :ex_aws,
        region: "us-east-1",

@@ -6,7 +6,8 @@ config :retail_challenge,
        secret_name: "",
        region: "us-east-1",
        in_test: true,
-       version: "1.3.3"
+       version: "1.3.3",
+       migrate: true
 
 config :ex_aws,
        region: "us-east-1",

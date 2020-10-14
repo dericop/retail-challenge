@@ -30,6 +30,10 @@ defmodule RetailChallenge.MixProject do
       {:configparser_ex, "~> 4.0"},
       {:plug_cowboy, "~> 2.2"},
       {:poison, "~> 4.0"},
+      {:jason, "~> 1.2"},
+      {:hackney, "~> 1.9"},
+      {:ecto_boot_migration, "~> 0.2.0"},
+      {:distillery, "~> 2.1"},
     ]
   end
 end

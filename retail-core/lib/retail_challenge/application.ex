@@ -2,7 +2,7 @@ defmodule RetailChallenge.Application do
   alias RetailChallenge.Config.AppConfig
   alias RetailChallenge.Entrypoint.Rest.RestController
   alias RetailChallenge.Adapters.Secrets.SecretManagerAdapter
-  alias RetailChallenge.Adapters.Repositories.{Repo, RepoCache}
+  alias RetailChallenge.Adapters.Repositories.{Repo, RepoCache, Migrator}
   alias RetailChallenge.Config.{AppConfig, ConfigHolder}
   use Application
   require Logger
@@ -43,6 +43,7 @@ defmodule RetailChallenge.Application do
     [
       {ConfigHolder, AppConfig.load_config()},
       {SecretManagerAdapter, []},
+      {Migrator, []},
       {Repo, []},
       {RepoCache, []},
     ]

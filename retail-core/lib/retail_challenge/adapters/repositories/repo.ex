@@ -14,11 +14,7 @@ defmodule RetailChallenge.Adapters.Repositories.Repo do
       DB_USERNAME: username,
       DB_PASSWORD: password,
       DB_NAME: database
-    } = SecretManagerAdapter.get_secret_value(nil, nil)
-        |> Poison.decode!
-        |> DataTypeUtils.normalize;
-    # TODO: Enable this
-    #    SecretManagerAdapter.get_secret()
+    } = SecretManagerAdapter.get_secret()
 
     config = config
              |> Keyword.put(:hostname, hostname)

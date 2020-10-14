@@ -3,9 +3,10 @@ import Config
 config :retail_challenge,
        http_port: 3000,
        enable_server: true,
-       secret_name: "my-secret",
+       secret_name: "retail-challenge-secret",
        region: "us-east-1",
-       version: "1.2.3"
+       version: "1.2.3",
+       migrate: true
 
 config :ex_aws,
        region: "us-east-1",
