@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sales-configmap
+  namespace: rtc
+data:
+  config.exs: |-
+    import Config
+
+    config :retail_challenge,
+           http_port: 3000,
+           enable_server: true,
+           secret_name: "retail-challenge-secret",
+           region: "us-east-1",
+           version: "1.0.0-alpha",
+           migrate: false
+
+    config :ex_aws,
+           region: "us-east-1",
+           access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],
+           secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role]
+
+    config :logger,
+           level: :warn
+
+    config :retail_challenge,
+           RetailChallenge.Adapters.Repositories.Repo,
+           database: System.get_env("database"),
+           username: System.get_env("username"),
+           password: System.get_env("password"),
+           hostname: System.get_env("hostname"),
+           pool_size: 50
+

@@ -1,0 +1,51 @@
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: retail-challenge
+  region: us-east-1
+  tags:
+    name: retail-challenge
+vpc:
+  id:  vpc-e3152199
+  cidr: 172.31.0.0/16     # (optional, must match CIDR used by the given VPC)
+  subnets:
+    public:
+      us-east-1a:
+        id: subnet-ac45a0f3
+      us-east-1b:
+        id: subnet-eb342c8c
+    private:
+      us-east-1a:
+        id: subnet-ac45a0f3
+      us-east-1b:
+        id: subnet-eb342c8c
+nodeGroups:
+  - name: eks-rabbitmq-amd64
+    privateNetworking: true
+    minSize: 1
+    maxSize: 4
+    instancesDistribution:
+      maxPrice: 1
+      instanceTypes: ["c5.large", "m5.large"] # At least two instance types should be specified
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 50
+      spotInstancePools: 2
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        externalDNS: false
+        certManager: true
+        appMesh: true
+        albIngress: true
+        xRay: true
+        cloudWatch: true
+    tags:
+      name: retail-challenge
+cloudWatch:
+  clusterLogging:
+    # enable specific types of cluster control plane logs
+    enableTypes: []
+    # all supported types: "api", "audit", "authenticator", "controllerManager", "scheduler"
+    # supported special values: "*" and "all"
