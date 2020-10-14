@@ -2,6 +2,7 @@ defmodule RetailChallenge.Entrypoint.Rest.RestController do
   alias RetailChallenge.Utils.DataTypeUtils
   alias RetailChallenge.EntryPoint.Rest.HealthIndicator
   alias RetailChallenge.UseCase.OrderUseCase
+  alias RetailChallenge.UseCase.AuthenticationUseCase  
 
   require Logger
   use Plug.Router
@@ -18,10 +19,21 @@ defmodule RetailChallenge.Entrypoint.Rest.RestController do
 
   post "/order" do
     DataTypeUtils.normalize(conn.body_params)
-    |> AuthenticationUseCase.handle_authentication_request(conn.req_headers)
-    |> build_response(conn)
+    |> validate_headers(conn.req_headers)
+    |> OrderUseCase.handle_order_request(conn.req_headers)
+    |> build_empty_response(conn)
   end
 
+  def validate_headers(body, headers) do
+    DataTypeUtils.extract_header(headers, "authorization") 
+    |> AuthenticationUseCase.validate_session
+
+    body
+  end
+
+  def validate_content_type(v) do
+  
+  end
 
   def build_empty_response(_, conn) do
     build_response(%{status: 204, body: ""}, conn)
