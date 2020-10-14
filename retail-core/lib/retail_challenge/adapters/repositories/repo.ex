@@ -18,6 +18,8 @@ defmodule RetailChallenge.Adapters.Repositories.Repo do
     } = SecretManagerAdapter.get_secret_value(nil, nil)
         |> Poison.decode!
         |> DataTypeUtils.normalize;
+    # TODO: Enable this
+    #    SecretManagerAdapter.get_secret()
 
     config = config
              |> Keyword.put(:hostname, hostname)
