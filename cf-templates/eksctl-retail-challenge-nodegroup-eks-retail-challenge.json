@@ -1,0 +1,612 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "EKS nodes (AMI family: AmazonLinux2, SSH access: false, private networking: true) [created and managed by eksctl]",
+  "Mappings": {
+    "ServicePrincipalPartitionMap": {
+      "aws": {
+        "EC2": "ec2.amazonaws.com",
+        "EKS": "eks.amazonaws.com",
+        "EKSFargatePods": "eks-fargate-pods.amazonaws.com"
+      },
+      "aws-cn": {
+        "EC2": "ec2.amazonaws.com.cn",
+        "EKS": "eks.amazonaws.com",
+        "EKSFargatePods": "eks-fargate-pods.amazonaws.com"
+      },
+      "aws-us-gov": {
+        "EC2": "ec2.amazonaws.com",
+        "EKS": "eks.amazonaws.com",
+        "EKSFargatePods": "eks-fargate-pods.amazonaws.com"
+      }
+    }
+  },
+  "Resources": {
+    "EgressInterCluster": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "Description": "Allow control plane to communicate with worker nodes in group eks-retail-challenge (kubelet and workload TCP ports)",
+        "DestinationSecurityGroupId": {
+          "Ref": "SG"
+        },
+        "FromPort": 1025,
+        "GroupId": {
+          "Fn::ImportValue": "eksctl-retail-challenge-cluster::SecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 65535
+      }
+    },
+    "EgressInterClusterAPI": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "Description": "Allow control plane to communicate with worker nodes in group eks-retail-challenge (workloads using HTTPS port, commonly used with extension API servers)",
+        "DestinationSecurityGroupId": {
+          "Ref": "SG"
+        },
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::ImportValue": "eksctl-retail-challenge-cluster::SecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 443
+      }
+    },
+    "IngressInterCluster": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "Description": "Allow worker nodes in group eks-retail-challenge to communicate with control plane (kubelet and workload TCP ports)",
+        "FromPort": 1025,
+        "GroupId": {
+          "Ref": "SG"
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::ImportValue": "eksctl-retail-challenge-cluster::SecurityGroup"
+        },
+        "ToPort": 65535
+      }
+    },
+    "IngressInterClusterAPI": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "Description": "Allow worker nodes in group eks-retail-challenge to communicate with control plane (workloads using HTTPS port, commonly used with extension API servers)",
+        "FromPort": 443,
+        "GroupId": {
+          "Ref": "SG"
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::ImportValue": "eksctl-retail-challenge-cluster::SecurityGroup"
+        },
+        "ToPort": 443
+      }
+    },
+    "IngressInterClusterCP": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "Description": "Allow control plane to receive API requests from worker nodes in group eks-retail-challenge",
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::ImportValue": "eksctl-retail-challenge-cluster::SecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Ref": "SG"
+        },
+        "ToPort": 443
+      }
+    },
+    "NodeGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "MaxSize": "50",
+        "MinSize": "2",
+        "MixedInstancesPolicy": {
+          "InstancesDistribution": {
+            "OnDemandBaseCapacity": "0",
+            "OnDemandPercentageAboveBaseCapacity": "0",
+            "SpotInstancePools": "5",
+            "SpotMaxPrice": "2.000000"
+          },
+          "LaunchTemplate": {
+            "LaunchTemplateSpecification": {
+              "LaunchTemplateName": {
+                "Fn::Sub": "${AWS::StackName}"
+              },
+              "Version": {
+                "Fn::GetAtt": ["NodeGroupLaunchTemplate", "LatestVersionNumber"]
+              }
+            },
+            "Overrides": [
+              {
+                "InstanceType": "c5.large"
+              },
+              {
+                "InstanceType": "m5.large"
+              },
+              {
+                "InstanceType": "c5.xlarge"
+              },
+              {
+                "InstanceType": "c5.2xlarge"
+              },
+              {
+                "InstanceType": "c5.4xlarge"
+              }
+            ]
+          }
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "PropagateAtLaunch": "true",
+            "Value": "retail-challenge-eks-retail-challenge-Node"
+          },
+          {
+            "Key": "kubernetes.io/cluster/retail-challenge",
+            "PropagateAtLaunch": "true",
+            "Value": "owned"
+          },
+          {
+            "Key": "k8s.io/cluster-autoscaler/enabled",
+            "PropagateAtLaunch": "true",
+            "Value": "true"
+          },
+          {
+            "Key": "k8s.io/cluster-autoscaler/retail-challenge",
+            "PropagateAtLaunch": "true",
+            "Value": "owned"
+          }
+        ],
+        "VPCZoneIdentifier": {
+          "Fn::Split": [
+            ",",
+            {
+              "Fn::ImportValue": "eksctl-retail-challenge-cluster::SubnetsPrivate"
+            }
+          ]
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MaxBatchSize": "1",
+          "MinInstancesInService": "0"
+        }
+      }
+    },
+    "NodeGroupLaunchTemplate": {
+      "Type": "AWS::EC2::LaunchTemplate",
+      "Properties": {
+        "LaunchTemplateData": {
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/xvda",
+              "Ebs": {
+                "Encrypted": false,
+                "VolumeSize": 80,
+                "VolumeType": "gp2"
+              }
+            }
+          ],
+          "IamInstanceProfile": {
+            "Arn": {
+              "Fn::GetAtt": ["NodeInstanceProfile", "Arn"]
+            }
+          },
+          "ImageId": "ami-07250434f8a7bc5f1",
+          "InstanceType": "c5.large",
+          "MetadataOptions": {
+            "HttpPutResponseHopLimit": 2,
+            "HttpTokens": "optional"
+          },
+          "NetworkInterfaces": [
+            {
+              "DeviceIndex": 0,
+              "Groups": [
+                {
+                  "Fn::ImportValue": "eksctl-retail-challenge-cluster::SharedNodeSecurityGroup"
+                },
+                {
+                  "Ref": "SG"
+                }
+              ]
+            }
+          ],
+          "UserData": "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"
+        },
+        "LaunchTemplateName": {
+          "Fn::Sub": "${AWS::StackName}"
+        }
+      }
+    },
+    "NodeInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "NodeInstanceRole"
+          }
+        ]
+      }
+    },
+    "NodeInstanceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": ["sts:AssumeRole"],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  {
+                    "Fn::FindInMap": [
+                      "ServicePrincipalPartitionMap",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      "EC2"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+          },
+          {
+            "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+          },
+          {
+            "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
+          },
+          {
+            "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
+          }
+        ],
+        "Path": "/",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "${AWS::StackName}/NodeInstanceRole"
+            }
+          }
+        ]
+      }
+    },
+    "PolicyALBIngress": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "acm:DescribeCertificate",
+                "acm:ListCertificates",
+                "acm:GetCertificate",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateTags",
+                "ec2:DeleteTags",
+                "ec2:DeleteSecurityGroup",
+                "ec2:DescribeAccountAttributes",
+                "ec2:DescribeAddresses",
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeInternetGateways",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTags",
+                "ec2:DescribeVpcs",
+                "ec2:ModifyInstanceAttribute",
+                "ec2:ModifyNetworkInterfaceAttribute",
+                "ec2:RevokeSecurityGroupIngress",
+                "elasticloadbalancing:AddListenerCertificates",
+                "elasticloadbalancing:AddTags",
+                "elasticloadbalancing:CreateListener",
+                "elasticloadbalancing:CreateLoadBalancer",
+                "elasticloadbalancing:CreateRule",
+                "elasticloadbalancing:CreateTargetGroup",
+                "elasticloadbalancing:DeleteListener",
+                "elasticloadbalancing:DeleteLoadBalancer",
+                "elasticloadbalancing:DeleteRule",
+                "elasticloadbalancing:DeleteTargetGroup",
+                "elasticloadbalancing:DeregisterTargets",
+                "elasticloadbalancing:DescribeListenerCertificates",
+                "elasticloadbalancing:DescribeListeners",
+                "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DescribeLoadBalancerAttributes",
+                "elasticloadbalancing:DescribeRules",
+                "elasticloadbalancing:DescribeSSLPolicies",
+                "elasticloadbalancing:DescribeTags",
+                "elasticloadbalancing:DescribeTargetGroups",
+                "elasticloadbalancing:DescribeTargetGroupAttributes",
+                "elasticloadbalancing:DescribeTargetHealth",
+                "elasticloadbalancing:ModifyListener",
+                "elasticloadbalancing:ModifyLoadBalancerAttributes",
+                "elasticloadbalancing:ModifyRule",
+                "elasticloadbalancing:ModifyTargetGroup",
+                "elasticloadbalancing:ModifyTargetGroupAttributes",
+                "elasticloadbalancing:RegisterTargets",
+                "elasticloadbalancing:RemoveListenerCertificates",
+                "elasticloadbalancing:RemoveTags",
+                "elasticloadbalancing:SetIpAddressType",
+                "elasticloadbalancing:SetSecurityGroups",
+                "elasticloadbalancing:SetSubnets",
+                "elasticloadbalancing:SetWebACL",
+                "iam:CreateServiceLinkedRole",
+                "iam:GetServerCertificate",
+                "iam:ListServerCertificates",
+                "waf-regional:GetWebACLForResource",
+                "waf-regional:GetWebACL",
+                "waf-regional:AssociateWebACL",
+                "waf-regional:DisassociateWebACL",
+                "tag:GetResources",
+                "tag:TagResources",
+                "waf:GetWebACL",
+                "wafv2:GetWebACL",
+                "wafv2:GetWebACLForResource",
+                "wafv2:AssociateWebACL",
+                "wafv2:DisassociateWebACL",
+                "shield:DescribeProtection",
+                "shield:GetSubscriptionState",
+                "shield:DeleteProtection",
+                "shield:CreateProtection",
+                "shield:DescribeSubscription",
+                "shield:ListProtections"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-PolicyALBIngress"
+        },
+        "Roles": [
+          {
+            "Ref": "NodeInstanceRole"
+          }
+        ]
+      }
+    },
+    "PolicyAppMesh": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "servicediscovery:CreateService",
+                "servicediscovery:DeleteService",
+                "servicediscovery:GetService",
+                "servicediscovery:GetInstance",
+                "servicediscovery:RegisterInstance",
+                "servicediscovery:DeregisterInstance",
+                "servicediscovery:ListInstances",
+                "servicediscovery:ListNamespaces",
+                "servicediscovery:ListServices",
+                "servicediscovery:GetInstancesHealthStatus",
+                "servicediscovery:UpdateInstanceCustomHealthStatus",
+                "servicediscovery:GetOperation",
+                "route53:GetHealthCheck",
+                "route53:CreateHealthCheck",
+                "route53:UpdateHealthCheck",
+                "route53:ChangeResourceRecordSets",
+                "route53:DeleteHealthCheck",
+                "appmesh:*"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-PolicyAppMesh"
+        },
+        "Roles": [
+          {
+            "Ref": "NodeInstanceRole"
+          }
+        ]
+      }
+    },
+    "PolicyAutoScaling": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeAutoScalingInstances",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeTags",
+                "autoscaling:SetDesiredCapacity",
+                "autoscaling:TerminateInstanceInAutoScalingGroup",
+                "ec2:DescribeLaunchTemplateVersions"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-PolicyAutoScaling"
+        },
+        "Roles": [
+          {
+            "Ref": "NodeInstanceRole"
+          }
+        ]
+      }
+    },
+    "PolicyCertManagerChangeSet": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": ["route53:ChangeResourceRecordSets"],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Sub": "arn:${AWS::Partition}:route53:::hostedzone/*"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-PolicyCertManagerChangeSet"
+        },
+        "Roles": [
+          {
+            "Ref": "NodeInstanceRole"
+          }
+        ]
+      }
+    },
+    "PolicyCertManagerGetChange": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": ["route53:GetChange"],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Sub": "arn:${AWS::Partition}:route53:::change/*"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-PolicyCertManagerGetChange"
+        },
+        "Roles": [
+          {
+            "Ref": "NodeInstanceRole"
+          }
+        ]
+      }
+    },
+    "PolicyCertManagerHostedZones": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "route53:ListResourceRecordSets",
+                "route53:ListHostedZonesByName"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-PolicyCertManagerHostedZones"
+        },
+        "Roles": [
+          {
+            "Ref": "NodeInstanceRole"
+          }
+        ]
+      }
+    },
+    "PolicyXRay": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+                "xray:GetSamplingRules",
+                "xray:GetSamplingTargets",
+                "xray:GetSamplingStatisticSummaries"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-PolicyXRay"
+        },
+        "Roles": [
+          {
+            "Ref": "NodeInstanceRole"
+          }
+        ]
+      }
+    },
+    "SG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Communication between the control plane and worker nodes in group eks-retail-challenge",
+        "Tags": [
+          {
+            "Key": "kubernetes.io/cluster/retail-challenge",
+            "Value": "owned"
+          },
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "${AWS::StackName}/SG"
+            }
+          }
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "eksctl-retail-challenge-cluster::VPC"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "FeatureLocalSecurityGroup": {
+      "Value": true
+    },
+    "FeaturePrivateNetworking": {
+      "Value": true
+    },
+    "FeatureSharedSecurityGroup": {
+      "Value": true
+    },
+    "InstanceProfileARN": {
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}::InstanceProfileARN"
+        }
+      },
+      "Value": {
+        "Fn::GetAtt": ["NodeInstanceProfile", "Arn"]
+      }
+    },
+    "InstanceRoleARN": {
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}::InstanceRoleARN"
+        }
+      },
+      "Value": {
+        "Fn::GetAtt": ["NodeInstanceRole", "Arn"]
+      }
+    }
+  }
+}

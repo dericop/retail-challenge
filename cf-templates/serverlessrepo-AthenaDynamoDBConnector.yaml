@@ -1,0 +1,73 @@
+Transform: AWS::Serverless-2016-10-31
+Parameters:
+  AthenaCatalogName:
+    Description: The name you will give to this catalog in Athena. It will also be used as the function name. This name must satisfy the pattern ^[a-z0-9-_]{1,64}$
+    Type: String
+    AllowedPattern: ^[a-z0-9-_]{1,64}$
+  SpillBucket:
+    Description: The name of the bucket where this function can spill data.
+    Type: String
+  SpillPrefix:
+    Description: The prefix within SpillBucket where this function can spill data.
+    Type: String
+    Default: athena-spill
+  LambdaTimeout:
+    Description: Maximum Lambda invocation runtime in seconds. (min 1 - 900 max)
+    Default: 900
+    Type: Number
+  LambdaMemory:
+    Description: Lambda memory in MB (min 128 - 3008 max).
+    Default: 3008
+    Type: Number
+  DisableSpillEncryption:
+    Description: "WARNING: If set to 'true' encryption for spilled data is disabled."
+    Default: 'false'
+    Type: String
+Resources:
+  ConnectorConfig:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          disable_spill_encryption:
+            Ref: DisableSpillEncryption
+          spill_bucket:
+            Ref: SpillBucket
+          spill_prefix:
+            Ref: SpillPrefix
+      FunctionName:
+        Ref: AthenaCatalogName
+      Handler: com.amazonaws.athena.connectors.dynamodb.DynamoDBCompositeHandler
+      CodeUri:
+        Bucket: awsserverlessrepo-changesets-plntc6bfnfj
+        Key: 405334307652/arn:aws:serverlessrepo:us-east-1:292517598671:applications-AthenaDynamoDBConnector-versions-2020.33.1/51b70574-cb00-440a-8be4-2b6591c5f0eb
+      Description: Enables Amazon Athena to communicate with DynamoDB, making your tables accessible via SQL
+      Runtime: java8
+      Timeout:
+        Ref: LambdaTimeout
+      MemorySize:
+        Ref: LambdaMemory
+      Policies:
+        - Statement:
+            - Action:
+                - dynamodb:DescribeTable
+                - dynamodb:ListSchemas
+                - dynamodb:ListTables
+                - dynamodb:Query
+                - dynamodb:Scan
+                - glue:GetTableVersions
+                - glue:GetPartitions
+                - glue:GetTables
+                - glue:GetTableVersion
+                - glue:GetDatabases
+                - glue:GetTable
+                - glue:GetPartition
+                - glue:GetDatabase
+                - athena:GetQueryExecution
+                - s3:ListAllMyBuckets
+              Effect: Allow
+              Resource: '*'
+          Version: '2012-10-17'
+        - S3CrudPolicy:
+            BucketName:
+              Ref: SpillBucket
