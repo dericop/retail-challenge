@@ -21,7 +21,7 @@ data:
            secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role]
 
     config :logger,
-           level: :warn
+           level: :error
 
     config :retail_challenge,
            RetailChallenge.Adapters.Repositories.Repo,
@@ -29,5 +29,7 @@ data:
            username: System.get_env("username"),
            password: System.get_env("password"),
            hostname: System.get_env("hostname"),
-           pool_size: 50
+           pool_size: 1,
+           queue_target: 4000,
+           queue_interval: 500
 

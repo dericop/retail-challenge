@@ -1,6 +1,10 @@
 defmodule RetailChallenge.Adapters.Repositories.ProductGateway do
-  alias RetailChallenge.Adapters.Repositories.{Product, Repo}
+  alias RetailChallenge.Adapters.Repositories.{Product, Repo, RepoCache}
   alias Ecto.Adapters.SQL
+
+  def get_by_sku_cached(sku) do
+    RepoCache.get(sku, fn -> get_by_sku(sku) end)
+  end
 
   def get_by_sku(sku) do
     Repo.get(Product, sku)

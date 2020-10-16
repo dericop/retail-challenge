@@ -9,6 +9,6 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: sales-deployment
-  minReplicas: 1
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 300
+  minReplicas: 5
+  maxReplicas: 30
+  targetCPUUtilizationPercentage: 100

@@ -4,22 +4,28 @@ kind: ClusterConfig
 metadata:
   name: retail-challenge
   region: us-east-1
-  tags:
-    name: retail-challenge
 vpc:
-  id: vpc-e3152199
+  id: vpc-98ef00e5
   cidr: 172.31.0.0/16     # (optional, must match CIDR used by the given VPC)
   subnets:
     public:
       us-east-1a:
-        id: subnet-ac45a0f3
+        id: subnet-8c6eb0ad
       us-east-1b:
-        id: subnet-eb342c8c
+        id: subnet-1ae08357
+      us-east-1c:
+        id: subnet-4c2cf013
+      us-east-1d:
+        id: subnet-a2ac7fc4
     private:
       us-east-1a:
-        id: subnet-ac45a0f3
+        id: subnet-8c6eb0ad
       us-east-1b:
-        id: subnet-eb342c8c
+        id: subnet-1ae08357
+      us-east-1c:
+        id: subnet-4c2cf013
+      us-east-1d:
+        id: subnet-a2ac7fc4
 nodeGroups:
   - name: eks-retail-challenge
     privateNetworking: true
@@ -41,8 +47,6 @@ nodeGroups:
         albIngress: true
         xRay: true
         cloudWatch: true
-    tags:
-      name: retail-challenge
 cloudWatch:
   clusterLogging:
     # enable specific types of cluster control plane logs

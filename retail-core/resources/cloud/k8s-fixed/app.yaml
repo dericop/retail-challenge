@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: sales-container
-          image: 446102255624.dkr.ecr.us-east-1.amazonaws.com/sales:1.0.0-alpha
+          image: 405334307652.dkr.ecr.us-east-1.amazonaws.com/sales:1.0.3-prod
           ports:
             - containerPort: 3000
           readinessProbe:
@@ -64,8 +64,8 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 200m
-              memory: 200Mi
+              cpu: 800m
+              memory: 500Mi
           volumeMounts:
             - name: sales-volume-config
               mountPath: "/app/rel/retail_challenge/etc"

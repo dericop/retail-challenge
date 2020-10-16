@@ -5,11 +5,12 @@ defmodule RetailChallenge.EntryPoint.Rest.HealthIndicator do
 
   def health() do
     version = ConfigHolder.conf().version
-    case Repo.health() do
-      {:ok, _} -> Poison.encode!(%{status: "UP", version: version})
-      error -> Logger.error "Health check error: #{inspect(error)}"
-               %{status: 503, body: Poison.encode!(%{status: "DOWN", version: version})}
-    end
+    Poison.encode!(%{status: "UP", version: version})
+    #    case Repo.health() do
+    #      {:ok, _} -> Poison.encode!(%{status: "UP", version: version})
+    #      error -> Logger.error "Health check error: #{inspect(error)}"
+    #               %{status: 503, body: Poison.encode!(%{status: "DOWN", version: version})}
+    #    end
   end
 
 end

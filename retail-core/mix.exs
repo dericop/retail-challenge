@@ -27,6 +27,7 @@ defmodule RetailChallenge.MixProject do
       {:uuid, "~> 1.1"},
       {:ex_aws, "~> 2.0"},
       {:ex_aws_secretsmanager, "~> 2.0"},
+      {:ex_aws_dynamo, "~> 2.0"},
       {:configparser_ex, "~> 4.0"},
       {:plug_cowboy, "~> 2.2"},
       {:poison, "~> 4.0"},

@@ -42,9 +42,9 @@ defmodule RetailChallenge.Application do
   def application_children(_other_env) do
     [
       {ConfigHolder, AppConfig.load_config()},
-      {SecretManagerAdapter, []},
-      {Migrator, []},
-      {Repo, []},
+#      {SecretManagerAdapter, []},
+#      {Migrator, []},
+#      {Repo, []},
       {RepoCache, []},
     ]
   end
